@@ -22,16 +22,26 @@
 
 task main()
 {
-  int nMotorPower;
-  int nDirection;
-
   while (true)
   {
     getJoystickSettings(joystick); // Get current joystick settings
     int joyY = joystick.joy1_y1;
     int joyX = joystick.joy1_x1;
 
-    if (joyY > 120) {
+    if (joyX > -10 && joyX < 10 && joyY > -10 && joyY < 10) {
+    	motor[motorD] = 0;
+    	motor[motorE] = 0;
+    } else if (joyX < -10 && joyY < 10 && joyY > -10) {
+    	short motorPower = -joyX / 127;
+    	motor[motorD] = motorPower * 100;
+    	motor[motorE] = motorPower * 100;
+    } else if (joyX > 10 && joyY < 10 && joyY > -10) {
+    	short motorPower = joyX / 127;
+    	motor[motorD] = -(motorPower * 100);
+    	motor[motorE] = -(motorPower * 100);
+    }
+
+    /*if (joyY > 120) {
     	motor[motorD] = -100;
     	motor[motorE] = 100;
     } else if (joyY < -120) {
@@ -46,7 +56,7 @@ task main()
   	} else {
   		motor[motorD] = 0;
   		motor[motorE] = 0;
-  	}
+  	}*/
 
     /*if (nDirection < 0)
     {

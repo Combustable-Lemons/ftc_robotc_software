@@ -25,21 +25,116 @@ task main()
   while (true)
   {
     getJoystickSettings(joystick); // Get current joystick settings
-    int joyY = joystick.joy1_y1;
-    int joyX = joystick.joy1_x1;
+    int joy1Y = joystick.joy1_y1;
+    int joy1X = joystick.joy1_x1;
+    int joy2X = joystick.joy1_x2;
+    int joy2Y = joystick.joy1_y2;
 
-    if (joyX > -10 && joyX < 10 && joyY > -10 && joyY < 10) {
-    	motor[motorD] = 0;
-    	motor[motorE] = 0;
-    } else if (joyX < -10 && joyY < 10 && joyY > -10) {
-    	short motorPower = -joyX / 127;
-    	motor[motorD] = motorPower * 100;
-    	motor[motorE] = motorPower * 100;
-    } else if (joyX > 10 && joyY < 10 && joyY > -10) {
-    	short motorPower = joyX / 127;
-    	motor[motorD] = -(motorPower * 100);
-    	motor[motorE] = -(motorPower * 100);
+    float motorPower;
+    float motorCurve;
+    int joy1Up = 2;
+    int joy2Left = 2;
+
+    if (joy1Y < 10 && joy1Y > -10 && joy1X > -10 && joy1X < 10) {
+    	motorPower = 0;
+    } else if (joy1Y > 0) {
+    	motorPower = (joy1Y * 100) / 128;
+    	joy1Up = 1;
+    } else {
+    	motorPower = (joy1Y * 100) / 128;
+    	joy1Up = 0;
     }
+
+    if (joy2Y < 10 && joy2Y > -10 && joy2X > -10 && joy2X < 10) {
+    	motorCurve = 0;
+    } else if (joy2X > 0) {
+    	motorCurve = (joy2X * 50) / 128;
+    	joy2Left = 0;
+    } else if (joy2X < 0) {
+    	motorCurve = (joy2X * 50) / 128;
+    	joy2Left = 1;
+    }
+
+    float motorPowerD;
+    float motorPowerE;
+
+    if (joy1Up == 1 && joy2Left == 1) {
+    	motorPowerD = motorPower + motorCurve;
+    	motorPowerE = motorPower - motorCurve;
+    } else if (joy1Up == 1 && joy2Left == 0) {
+    	motorPowerD = motorPower + motorCurve;
+    	motorPowerE = motorPower - motorCurve;
+    } else if (joy1Up == 0 && joy2Left == 1) {
+    	motorPowerD = motorPower + motorCurve;
+    	motorPowerE = motorPower - motorCurve;
+    } else if (joy1Up == 0 && joy2Left == 0) {
+    	motorPowerD = motorPower + motorCurve;
+    	motorPowerE = motorPower - motorCurve;
+    } else if (joy1Up == 2) {
+    	motorPowerD = motorCurve;
+    	motorPowerE = -motorCurve;
+    } else if (joy2Left == 2) {
+    	motorPowerD = motorPower;
+    	motorPowerE = motorPower;
+    } else if (joy1Up == 2 && joy2Left == 2) {
+    	motorPowerD = 0;
+    	motorPowerE = 0;
+    }
+    if (motorPowerD > 100 || motorPowerE > 100) {
+    	if (motorPowerD > 100) {
+    		int amountToSubtract = motorPowerD - 100;
+    		motorPowerD = motorPowerD - amountToSubtract;
+    		motorPowerE = motorPowerE - amountToSubtract;
+    	}
+    	if (motorPowerE > 100) {
+    		int amountToSubtract = motorPowerE - 100;
+    		motorPowerD = motorPowerD - amountToSubtract;
+    		motorPowerE = motorPowerE - amountToSubtract;
+    	}
+    }
+    if (motorPowerD < -100 || motorPowerE < -100) {
+    	if (motorPowerD < -100) {
+    		int amountToAdd = motorPowerD + 100;
+    		motorPowerD = motorPowerD + amountToAdd;
+    		motorPowerE = motorPowerE + amountToAdd;
+    	}
+    	if (motorPowerE < -100) {
+    		int amountToAdd = motorPowerE + 100;
+    		motorPowerD = motorPowerD + amountToAdd;
+    		motorPowerE = motorPowerE + amountToAdd;
+    	}
+    }
+    motor[motorD] = -motorPowerD;
+    motor[motorE] = motorPowerE;
+
+    /*if (joyX > -10 && joyX < 10 && joyY > -10 && joyY < 10) { //If the joystick is in the middle "dead zone" don't do anything
+    	motor[motorD] = 0; //Stop motors
+    	motor[motorE] = 0;
+    } else if (joyX < -10 && joyY < 10 && joyY > -10) { //If the stick is to the lift of the dead zone
+    	float motorPower = 0;
+    	motorPower = (-joyX * 100) / 128; //Get the joystick's x, multiply by 100, then divide by 128, to get a motor power that's proportional to the joystick's location.
+    	motor[motorD] = (short) motorPower; //Set the motors going that speed.
+    	motor[motorE] = (short) motorPower;
+    } else if (joyX > 10 && joyY < 10 && joyY > -10) { //Same thing as above, but the other direction
+    	float motorPower = (joyX * 100) / 128;
+    	motor[motorD] = -motorPower;
+    	motor[motorE] = -motorPower;
+    } else if (joyX > -10 && joyX < 10 && joyY > 10) {
+    	float motorPower = (joyY * 100) / 128;
+    	motor[motorD] = -motorPower;
+    	motor[motorE] = motorPower;
+  	} else if (joyX > -10 && joyX < 10 && joyY < -10) {
+    	float motorPower = (-joyY * 100) / 128;
+    	motor[motorD] = motorPower;
+    	motor[motorE] = -motorPower;
+    } else {
+    	if (joyY > 0 && joyX < 0) {
+    		float motorPower = (joyY * 100) / 128;
+    		float motorOffset = (-joyX * 100) / 128;
+    		motor[motorD] = -100 + (short) motorOffset;
+    		motor[motorE] = ((short) motorPower);
+    	}
+    }*/
 
     /*if (joyY > 120) {
     	motor[motorD] = -100;
